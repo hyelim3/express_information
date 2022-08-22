@@ -22,6 +22,42 @@ app.get("/member", async (req, res) => {
   res.json(rows);
 });
 
+//db수정
+app.patch("/members/check/:id", async (req, res) => {
+  const { id } = req.params;
+  const [[memberRow]] = await pool.query(
+    `
+    select *
+    from member
+    where id =?
+    `,
+    [id]
+  );
+  if (!memberRow) {
+    res.status(404).json({
+      msg: "not found",
+    });
+    return;
+  }
+  await pool.query(
+    `
+    UPDATE member
+    set checked = ?
+    where id =?
+    `,
+    [!memberRow.checked, id]
+  );
+
+  const [updatedMembers] = await pool.query(
+    `
+    select *
+    from member
+    order by id ASC
+    `
+  );
+  res.json(updatedMembers);
+});
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
